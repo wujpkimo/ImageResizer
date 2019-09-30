@@ -25,10 +25,7 @@ namespace ImageResizer
 
                 foreach (var item in allImageFiles)
                 {
-                    Task.Run(() =>
-                    {
-                        File.Delete(item);
-                    });
+                    File.Delete(item);
                 }
             }
         }
@@ -39,13 +36,15 @@ namespace ImageResizer
         /// <param name="sourcePath">圖片來源目錄路徑</param>
         /// <param name="destPath">產生圖片目的目錄路徑</param>
         /// <param name="scale">縮放比例</param>
-        public void ResizeImages(string sourcePath, string destPath, double scale)
+        public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             var allFiles = FindImages(sourcePath);
+            // 依檔案數量預先new出對應數量的task
             Task[] tasks = new Task[allFiles.Count];
             int i = 0;
             foreach (var filePath in allFiles)
             {
+                // 每筆作業都使用非用步作法執行
                 tasks[i] = Task.Run(() =>
                   {
                       Image imgPhoto = Image.FromFile(filePath);
@@ -68,9 +67,8 @@ namespace ImageResizer
             }
             var task = Task.WhenAll(tasks);
 
-            while (!task.IsCompleted)
-            {
-            }
+            // 待全數完成
+            await task;
         }
 
         /// <summary>
