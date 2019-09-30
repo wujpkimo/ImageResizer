@@ -41,17 +41,16 @@ namespace ImageResizer
         public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             var allFiles = FindImages(sourcePath);
-            // 依檔案數量預先new出對應數量的task
-            Task[] tasks = new Task[allFiles.Count];
-            int i = 0;
+            // New出tasks來存放每筆作業
+            List<Task> tasks = new List<Task>();
             foreach (var filePath in allFiles)
             {
                 // 每筆作業都使用非用步作法執行
-                tasks[i] = Task.Run(() =>
+                tasks.Add(Task.Run(() =>
                   {
                       Image imgPhoto = Image.FromFile(filePath);
                       string imgName = Path.GetFileNameWithoutExtension(filePath);
-                      System.Console.WriteLine($"Start process {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId} and time is {DateTime.Now}");
+                      System.Console.WriteLine($"Start process {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
 
                       int sourceWidth = imgPhoto.Width;
                       int sourceHeight = imgPhoto.Height;
@@ -65,14 +64,11 @@ namespace ImageResizer
 
                       string destFile = Path.Combine(destPath, imgName + ".jpg");
                       processedImage.Save(destFile, ImageFormat.Jpeg);
-                      System.Console.WriteLine($"Processed {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId} and time is {DateTime.Now}");
-                  });
-                i++;
+                      System.Console.WriteLine($"Processed {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
+                  }));
             }
-            var task = Task.WhenAll(tasks);
-
             // 待全數完成
-            await task;
+            await Task.WhenAll(tasks);
         }
 
         /// <summary>
