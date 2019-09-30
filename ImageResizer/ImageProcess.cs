@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ImageResizer
@@ -49,6 +51,7 @@ namespace ImageResizer
                   {
                       Image imgPhoto = Image.FromFile(filePath);
                       string imgName = Path.GetFileNameWithoutExtension(filePath);
+                      System.Console.WriteLine($"Start process {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId} and time is {DateTime.Now}");
 
                       int sourceWidth = imgPhoto.Width;
                       int sourceHeight = imgPhoto.Height;
@@ -62,6 +65,7 @@ namespace ImageResizer
 
                       string destFile = Path.Combine(destPath, imgName + ".jpg");
                       processedImage.Save(destFile, ImageFormat.Jpeg);
+                      System.Console.WriteLine($"Processed {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId} and time is {DateTime.Now}");
                   });
                 i++;
             }
