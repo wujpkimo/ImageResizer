@@ -38,6 +38,7 @@ namespace ImageResizer
         /// <param name="sourcePath">圖片來源目錄路徑</param>
         /// <param name="destPath">產生圖片目的目錄路徑</param>
         /// <param name="scale">縮放比例</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("AsyncUsage", "AsyncFixer01:Unnecessary async/await usage", Justification = "<暫止>")]
         public async Task ResizeImagesAsync(string sourcePath, string destPath, double scale)
         {
             var allFiles = FindImages(sourcePath);
@@ -69,6 +70,79 @@ namespace ImageResizer
             }
             // 待全數完成
             await Task.WhenAll(tasks);
+        }
+
+        /// <summary>
+        /// 進行圖片的縮放作業
+        /// </summary>
+        /// <param name="sourcePath">圖片來源目錄路徑</param>
+        /// <param name="destPath">產生圖片目的目錄路徑</param>
+        /// <param name="scale">縮放比例</param>
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("AsyncUsage", "AsyncFixer01:Unnecessary async/await usage", Justification = "<暫止>")]
+        public async Task ResizeImagesStopOver50msAsync(string sourcePath, string destPath, double scale, CancellationTokenSource cts = default)
+        {
+            var allFiles = FindImages(sourcePath);
+
+            // New出tasks來存放每筆作業
+            List<Task> tasks = new List<Task>();
+
+            foreach (var filePath in allFiles)
+            {
+                // 每筆作業都使用非用步作法執行
+                tasks.Add(Task.Run(() =>
+                {
+                    if (cts.Token.IsCancellationRequested == true)
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        return;
+                    }
+                    Image imgPhoto = Image.FromFile(filePath);
+                    string imgName = Path.GetFileNameWithoutExtension(filePath);
+                    System.Console.WriteLine($"Start process {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
+
+                    int sourceWidth = imgPhoto.Width;
+                    int sourceHeight = imgPhoto.Height;
+
+                    int destionatonWidth = (int)(sourceWidth * scale);
+                    int destionatonHeight = (int)(sourceHeight * scale);
+                    if (cts.Token.IsCancellationRequested == true)
+                    {
+                        cts.Token.ThrowIfCancellationRequested();
+                        return;
+                    }
+
+                    if (imgName == "6CxiNWJceow")
+                    {
+                        Console.WriteLine($"Cancel in processing filename {imgName}");
+                        cts.Cancel();
+                    }
+                    Bitmap processedImage = processBitmap((Bitmap)imgPhoto,
+                      sourceWidth, sourceHeight,
+                      destionatonWidth, destionatonHeight);
+
+                    string destFile = Path.Combine(destPath, imgName + ".jpg");
+                    processedImage.Save(destFile, ImageFormat.Jpeg);
+                    System.Console.WriteLine($"Processed {imgName} and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
+                }));
+            }
+            //ConsoleKeyInfo key = Console.ReadKey();
+            //if (key.Key == ConsoleKey.C)
+            //{
+            //    cts.Cancel();
+            //}
+            // 待全數完成
+            try
+            {
+                await Task.WhenAll(tasks);
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine("Executor had been canceled!!");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
         /// <summary>

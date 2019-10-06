@@ -22,7 +22,11 @@ namespace ImageResizer
             Stopwatch sw = new Stopwatch();
             sw.Start();
             System.Console.WriteLine($"Start process and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
-            await imageProcess.ResizeImagesAsync(sourcePath, destinationPath, 2.0);
+            //await imageProcess.ResizeImagesAsync(sourcePath, destinationPath, 2.0);
+
+            CancellationTokenSource cts = new CancellationTokenSource();
+            await imageProcess.ResizeImagesStopOver50msAsync(sourcePath, destinationPath, 2.0, cts);
+
             System.Console.WriteLine($"Finished all file and Thread ID = {Thread.CurrentThread.ManagedThreadId.ToString("00")} and time is {DateTime.Now}");
             sw.Stop();
 
